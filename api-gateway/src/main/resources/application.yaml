@@ -31,6 +31,10 @@ spring:
           uri: lb://MS-NOTIFICACIONES
           predicates:
             - Path=/api/v1/notificaciones/**
+        - id: ms-catalogo-routes
+          uri: lb://MS-CATALOGO
+          predicates:
+            - Path=/api/catalogo/**
 
   security:
     oauth2:

@@ -27,6 +27,16 @@ public class Libro {
     @Column(nullable = false, unique = true, length = 20)
     private String isbn;
 
+    @Column(length = 255)
+    private String autor;
+
+    @Column(length = 100)
+    private String categoria;
+
+    @Lob
+    @Column(name = "portada")
+    private byte[] portada;
+
     @Builder.Default
     @Column(nullable = false)
     private Integer stock = 0;
