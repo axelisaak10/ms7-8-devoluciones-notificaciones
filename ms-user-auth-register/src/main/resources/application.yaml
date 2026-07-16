@@ -10,9 +10,9 @@ spring:
   # CONFIGURACIÓN DE POSTGRESQL (JPA/HIBERNATE)
   # ==========================================
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/user_db
-    username: postgres
-    password: Admin2024!
+    url: jdbc:postgresql://db.chxavcfzhsifgskhhrkh.supabase.co:5432/postgres
+    username: postgres.chxavcfzhsifgskhhrkh
+    password: 019f5e72-efde-7eb5-bcd3-999e2dc610f8
     driver-class-name: org.postgresql.Driver
 
   jpa:

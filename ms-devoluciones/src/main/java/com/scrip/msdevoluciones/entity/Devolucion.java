@@ -21,7 +21,7 @@ public class Devolucion {
     @GeneratedValue
     private UUID id;
 
-    // Relación Uno a Uno con Préstamo debido a la restricción UNIQUE en la base de datos (consultar el objeto en el ms-prestamos con OpenFeign)
+    @Column(name = "prestamo_id", nullable = false, unique = true)
     private UUID prestamo;
 
     @Builder.Default

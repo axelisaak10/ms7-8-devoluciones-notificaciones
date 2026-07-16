@@ -1,5 +1,9 @@
 package com.scrip.msprestamos.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -9,6 +13,10 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "libros", schema = "catalogo")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Libro {
 
     @Id
@@ -20,15 +28,12 @@ public class Libro {
     @Column(nullable = false, unique = true, length = 20)
     private String isbn;
 
-    public UUID getId() {
-        return id;
-    }
+    @Column(nullable = false)
+    private Integer stock = 0;
 
-    public String getTitulo() {
-        return titulo;
-    }
+    @Column(name = "stock_reservado", nullable = false)
+    private Integer stockReservado = 0;
 
-    public String getIsbn() {
-        return isbn;
-    }
+    @Column(nullable = false)
+    private Boolean activo = true;
 }

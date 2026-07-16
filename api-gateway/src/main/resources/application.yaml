@@ -16,14 +16,21 @@ spring:
       # DEFINICIÓN EXPLICITA DE RUTAS
       routes:
         - id: ms-user-auth-register-routes
-          # lb:// le dice al Gateway: "Busca en Eureka el servicio llamado ms-user-auth-register"
           uri: lb://MS-USER-AUTH-REGISTER
           predicates:
-            - Path=/api/v1/**, /oauth2/**, /connect/**, /.well-known/**, /login, /login**
-        - id: ms-prestamos-estadisticas-routes
+            - Path=/api/v1/users/**, /api/v1/auth/**, /oauth2/**, /connect/**, /.well-known/**, /login, /login**
+        - id: ms-prestamos-routes
           uri: lb://MS-PRESTAMOS
           predicates:
-            - Path=/api/estadisticas/**
+            - Path=/api/v1/prestamos/**, /api/v1/sanciones/**, /api/v1/reservas/**, /api/estadisticas/**
+        - id: ms-devoluciones-routes
+          uri: lb://MS-DEVOLUCIONES
+          predicates:
+            - Path=/api/v1/devoluciones/**
+        - id: ms-notificaciones-routes
+          uri: lb://MS-NOTIFICACIONES
+          predicates:
+            - Path=/api/v1/notificaciones/**
 
   security:
     oauth2:
