@@ -7,9 +7,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.UUID;
+import java.time.OffsetDateTime;
 
 @Repository
 public interface ReservaRepository extends JpaRepository<Reserva, UUID> {
     List<Reserva> findByUsuarioIdAndEstado(UUID usuarioId, EstadoReserva estado);
     List<Reserva> findByUsuarioId(UUID usuarioId);
+    List<Reserva> findByEstadoAndFechaExpiracionGreaterThanEqualAndFechaExpiracionLessThan(
+            EstadoReserva estado, OffsetDateTime desde, OffsetDateTime hasta);
 }

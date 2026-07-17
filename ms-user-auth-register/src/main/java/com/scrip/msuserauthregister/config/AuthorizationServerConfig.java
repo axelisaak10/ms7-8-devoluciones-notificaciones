@@ -2,6 +2,7 @@ package com.scrip.msuserauthregister.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -24,7 +25,10 @@ public class AuthorizationServerConfig {
 
     // 1. Aquí solucionamos el error: Registramos un cliente en memoria para pruebas
     @Bean
-    public RegisteredClientRepository registeredClientRepository(BCryptPasswordEncoder passwordEncoder) {
+    public RegisteredClientRepository registeredClientRepository(
+            BCryptPasswordEncoder passwordEncoder,
+            @Value("${MS_NOTIFICATIONS_CLIENT_SECRET}") String notificationsClientSecret,
+            @Value("${MS_PRESTAMOS_CLIENT_SECRET}") String prestamosClientSecret) {
         RegisteredClient postmanClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("postman-client")
                 // Registramos la contraseña secreta cifrada con BCrypt (la usaremos en Postman)
@@ -63,7 +67,23 @@ public class AuthorizationServerConfig {
                         .build())
                 .build();
 
-        return new InMemoryRegisteredClientRepository(postmanClient, angularClient);
+        RegisteredClient notificationsService = RegisteredClient.withId(UUID.randomUUID().toString())
+                .clientId("ms-notificaciones-service")
+                .clientSecret(passwordEncoder.encode(notificationsClientSecret))
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                .scope("identity.read")
+                .build();
+
+        RegisteredClient prestamosService = RegisteredClient.withId(UUID.randomUUID().toString())
+                .clientId("ms-prestamos-service")
+                .clientSecret(passwordEncoder.encode(prestamosClientSecret))
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                .scope("notifications.write")
+                .build();
+
+        return new InMemoryRegisteredClientRepository(postmanClient, angularClient, notificationsService, prestamosService);
     }
 
     // 2. Definimos los ajustes del servidor (rutas por defecto)

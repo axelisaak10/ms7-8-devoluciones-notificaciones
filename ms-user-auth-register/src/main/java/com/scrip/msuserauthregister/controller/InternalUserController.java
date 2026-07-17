@@ -28,8 +28,11 @@ public class InternalUserController {
         boolean administrator = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch("ROLE_ADMINISTRADOR"::equals);
+        boolean identityService = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("SCOPE_identity.read"::equals);
 
-        if (!administrator && !id.toString().equals(tokenUserId)) {
+        if (!identityService && !administrator && !id.toString().equals(tokenUserId)) {
             throw new AccessDeniedException("El token no pertenece al usuario solicitado");
         }
         return userService.findStatusById(id);

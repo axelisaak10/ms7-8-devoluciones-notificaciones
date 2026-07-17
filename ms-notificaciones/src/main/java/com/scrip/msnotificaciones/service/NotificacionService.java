@@ -6,57 +6,59 @@ import com.scrip.msnotificaciones.repository.NotificacionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class NotificacionService {
 
     private final NotificacionRepository notificacionRepository;
+    private final EntregaCorreoService entregaCorreoService;
 
     @Transactional
     public Notificacion enviarNotificacion(NotificacionRequest request) {
-        // 1. Persistir la notificación en base de datos
-        Notificacion notificacion = Notificacion.builder()
+        String idempotencyKey = generarClaveIdempotencia(request);
+        var existente = notificacionRepository.findByClaveIdempotencia(idempotencyKey);
+        if (existente.isPresent()) {
+            return existente.get();
+        }
+
+        Notificacion notificacion = notificacionRepository.save(Notificacion.builder()
                 .usuarioId(request.getUsuarioId())
                 .tipo(request.getTipo())
                 .referenciaId(request.getReferenciaId())
                 .mensaje(request.getMensaje())
+                .claveIdempotencia(idempotencyKey)
                 .fechaEnvio(OffsetDateTime.now())
-                .build();
+                .build());
 
-        notificacion = notificacionRepository.save(notificacion);
-
-        // 2. Imprimir en consola de forma formateada según el tipo (NO01 - NO04)
-        String prefix = switch (request.getTipo()) {
-            case PRESTAMO_AUTORIZADO -> "PRÉSTAMO AUTORIZADO";
-            case DEVOLUCION_REGISTRADA -> "DEVOLUCIÓN REGISTRADA";
-            case SANCION_GENERADA -> "SANCIÓN GENERADA";
-            case RESERVA_POR_EXPIRAR -> "RESERVA POR EXPIRAR";
-            case RESERVA_CREADA -> "RESERVA CREADA";
-            case RESERVA_CANCELADA -> "RESERVA CANCELADA";
-        };
-
-        System.out.println(String.format(
-                "\n================================================================================\n" +
-                "[NOTIFICACIÓN - %s]\n" +
-                "Destinatario (Usuario ID): %s\n" +
-                "Referencia ID            : %s\n" +
-                "Mensaje                  : %s\n" +
-                "Fecha de Envío           : %s\n" +
-                "================================================================================",
-                prefix,
-                request.getUsuarioId(),
-                request.getReferenciaId() != null ? request.getReferenciaId() : "N/A",
-                request.getMensaje(),
-                notificacion.getFechaEnvio().toString()
-        ));
-
+        UUID id = notificacion.getId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override public void afterCommit() { entregaCorreoService.entregar(id); }
+        });
         return notificacion;
     }
 
-    public java.util.List<com.scrip.msnotificaciones.entity.Notificacion> obtenerNotificacionesUsuario(java.util.UUID usuarioId) {
+    public java.util.List<Notificacion> obtenerNotificacionesUsuario(UUID usuarioId) {
         return notificacionRepository.findByUsuarioIdOrderByFechaEnvioDesc(usuarioId);
+    }
+
+    private String generarClaveIdempotencia(NotificacionRequest request) {
+        String fuente = request.getTipo() + ":" + request.getUsuarioId() + ":" +
+                (request.getReferenciaId() == null ? request.getMensaje() : request.getReferenciaId());
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(fuente.getBytes(StandardCharsets.UTF_8));
+            StringBuilder resultado = new StringBuilder("notificacion-");
+            for (byte b : hash) resultado.append(String.format("%02x", b));
+            return resultado.toString();
+        } catch (Exception exception) {
+            throw new IllegalStateException("No fue posible generar la clave de idempotencia", exception);
+        }
     }
 }

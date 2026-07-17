@@ -11,6 +11,12 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 @Configuration
 public class FeignClientConfig {
 
+    private final NotificationsServiceTokenProvider serviceTokenProvider;
+
+    public FeignClientConfig(NotificationsServiceTokenProvider serviceTokenProvider) {
+        this.serviceTokenProvider = serviceTokenProvider;
+    }
+
     @Bean
     public RequestInterceptor oauth2FeignRequestInterceptor() {
         return new RequestInterceptor() {
@@ -19,6 +25,8 @@ public class FeignClientConfig {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 if (authentication instanceof JwtAuthenticationToken jwtAuthToken) {
                     template.header("Authorization", "Bearer " + jwtAuthToken.getToken().getTokenValue());
+                } else {
+                    template.header("Authorization", "Bearer " + serviceTokenProvider.getToken());
                 }
             }
         };
